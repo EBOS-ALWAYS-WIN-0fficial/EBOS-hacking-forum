@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EBOS ALWAYS WIN — форум+маркет</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* Базовые переменные (зелёная тема по умолчанию) */
+        :root {
+            --accent: #0f0;
+            --accent-dim: #0a2a0a;
+            --accent-border: #2a6f2a;
+            --accent-glow: rgba(0,255,0,0.3);
+            --accent-hover: #1f6f1f;
+            --text-main: #0f0;
+            --text-dim: #8bc34a;
+            --card-bg: rgba(2,12,2,0.7);
+            --bg-gradient: radial-gradient(circle at 20% 30%, #0a0f0a, #010401);
+        }
+        
+        body {
+            background: var(--bg-gradient);
+            font-family: 'Courier New', monospace;
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.2s;
+        }
+        
+        /* Фоны (переключаются через классы на body) */
+        body.bg-default { background: radial-gradient(circle at 20% 30%, #0a0f0a, #010401); }
+        body.bg-hack1 { background: url('https://evilclowns.narod.ru/images2/clayscr1.jpg') center/cover fixed; }
+        body.bg-hack2 { background: url('https://avatars.mds.yandex.net/i?id=3c9e80456f67a7b501637950a8ec61b7_l-5666576-images-thumbs&n=13') center/cover fixed; }
+        body.bg-hack1::before, body.bg-hack2::before {
+            content: "";
+            position: fixed;
+            top:0; left:0;
+            width:100%; height:100%;
+            background: rgba(0,0,0,0.6);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container { max-width: 1300px; margin: 0 auto; position: relative; z-index: 2; }
+        
+        /* Шапка */
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        .header h1 { font-size: 3rem; letter-spacing: 6px; text-shadow: 0 0 5px var(--accent); color: var(--accent); }
+        
+        /* Статус-бар с шестерёнкой */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--accent-border);
+            border-radius: 30px;
+            padding: 8px 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(4px);
+        }
+        .settings-icon {
+            font-size: 1.6rem;
+            cursor: pointer;
+            background: var(--accent-dim);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            border: 1px solid var(--accent-border);
+        }
+        .settings-icon:hover {
+            transform: rotate(30deg);
+            box-shadow: 0 0 10px var(--accent);
+            border-color: var(--accent);
+        }
+        .user-area button, .user-info {
+            background: var(--accent-dim);
+            border: 1px solid var(--accent-border);
+            border-radius: 20px;
+            padding: 4px 12px;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+        
+        /* Вкладки */
+        .layout { display: flex; gap: 30px; }
+        .tabs-left {
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: sticky;
+            top: 20px;
+            align-self: flex-start;
+        }
+        .tab-button {
+            background: rgba(0,10,0,0.7);
+            border: 1px solid var(--accent-border);
+            border-radius: 40px;
+            padding: 10px 16px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-dim);
+            cursor: pointer;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .tab-button.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+        .tab-button:hover { background: var(--accent-dim); border-color: var(--accent); }
+        
+        /* Контент */
+        .content-right {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid var(--accent-border);
+            backdrop-filter: blur(4px);
+        }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        
+        /* Форум */
+        .thread-list { border: 1px solid var(--accent-border); border-radius: 16px; overflow: hidden; margin-top: 10px; }
+        .thread-row, .thread-header {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1.5fr;
+            padding: 10px;
+            border-bottom: 1px solid var(--accent-border);
+        }
+        .thread-header { background: rgba(10,30,10,0.6); font-weight: bold; }
+        .thread-row { cursor: pointer; }
+        .thread-row:hover { background: var(--accent-dim); }
+        .posts-panel { display: none; margin-top: 20px; }
+        .posts-panel.active { display: block; }
+        .post { background: rgba(0,10,0,0.5); border-left: 3px solid var(--accent); border-radius: 12px; margin-bottom: 12px; padding: 10px; }
+        
+        /* Маркет */
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        .market-card {
+            background: rgba(0, 15, 0, 0.7);
+            border: 1px solid var(--accent-border);
+            border-radius: 24px;
+            padding: 15px;
+            transition: 0.2s;
+        }
+        .market-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 0 15px var(--accent-glow); }
+        .market-card img { width: 100%; border-radius: 16px; border: 1px solid var(--accent-border); margin-bottom: 12px; }
+        .market-card h3 { color: var(--accent); }
+        .market-status { margin-top: 12px; padding: 5px; background: #0a1a0a; border-radius: 30px; text-align: center; font-weight: bold; color: #ffaa33; border: 1px solid #aa7733; }
+        
+        /* DDoS и прочее */
+        input, textarea {
+            background: #021002;
+            border: 1px solid var(--accent-border);
+            border-radius: 16px;
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+        button {
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            border-radius: 30px;
+            padding: 6px 18px;
+            cursor: pointer;
+            color: var(--accent);
+            font-weight: bold;
+        }
+        button:hover { background: var(--accent-hover); box-shadow: 0 0 8px var(--accent); }
+        .progress-bar { height: 16px; background: #021002; border-radius: 20px; border: 1px solid var(--accent-border); overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: var(--accent); }
+        .log-area { background: #010801; border-radius: 16px; height: 150px; overflow-y: auto; padding: 8px; font-size: 12px; margin-top: 10px; border: 1px solid var(--accent-border); }
+        
+        /* Модалки */
+        .modal {
+            display: none;
+            position: fixed;
+            top:0; left:0;
+            width:100%; height:100%;
+            background: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #071007;
+            border: 2px solid var(--accent);
+            border-radius: 28px;
+            padding: 20px;
+            width: 350px;
+        }
+        .settings-option {
+            margin: 15px 0;
+        }
+        .settings-option label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        @media (max-width: 700px) {
+            .layout { flex-direction: column; }
+            .tabs-left { flex-direction: row; flex-wrap: wrap; width: auto; position: static; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>EBOS ALWAYS WIN</h1>
+        <div>// неоновая сеть //</div>
+    </div>
+    <div class="status-bar">
+        <div>🔒 СТАТУС: ОНЛАЙН | СЕССИЙ: <span id="sessionCount">0</span></div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="settings-icon" id="settingsBtn">⚙️</div>
+            <div class="user-area" id="userArea"></div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="tabs-left">
+            <div class="tab-button active" data-tab="rules">📜 ПРАВИЛА</div>
+            <div class="tab-button" data-tab="forum">💬 АКТИВНЫЕ ТЕМЫ</div>
+            <div class="tab-button" data-tab="hack">⚡ ХАКЕРСТВО</div>
+            <div class="tab-button" data-tab="ddos">💀 DDoS-АТАКА</div>
+            <div class="tab-button" data-tab="webhack">💀 ВЗЛОМ САЙТОВ</div>
+            <div class="tab-button" data-tab="market">🛒 МАРКЕТ</div>
+        </div>
+        <div class="content-right">
+            <!-- ПРАВИЛА (расширенные) -->
+            <div id="tab-rules" class="tab-pane active">
+                <div style="padding:20px;">
+                    <h3>▸ ПРАВИЛА ФОРУМА</h3>
+                    <ul style="margin-top:15px; list-style:none;">
+                        <li>➤ 1. Не быть сотрудником ЦРУ, ФСБ, ФБР, ОМОН, ТЦК, СВО.</li>
+                        <li>➤ 2. Быть хакером (или энтузиастом).</li>
+                        <li>➤ 3. Не угрожать членам форума.</li>
+                    </ul>
+                    <div style="margin-top: 25px; border-top: 1px dashed var(--accent-border); padding-top: 15px;">
+                        <h4>⚠️ ЗА НЕ СОБЛЮДЕНИЕ ПРАВИЛ</h4>
+                        <ul style="margin-top:10px; list-style:none;">
+                            <li>➤ 1. Докс того, кто не слушал правила.</li>
+                            <li>➤ 2. Пожизненный бан.</li>
+                            <li>➤ 3. ДОКС, СВАТ, ДЕАНОН И БОМБЕРЫ (СМС и т.д.) — карается по всей строгости.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- АКТИВНЫЕ ТЕМЫ -->
+            <div id="tab-forum" class="tab-pane"><div><div style="display:flex; justify-content:space-between;"><h3>АКТИВНЫЕ ТЕМЫ</h3><button id="createTopicBtn">➕ СОЗДАТЬ ТЕМУ</button></div><div class="thread-list"><div class="thread-header"><span>ТЕМА</span><span>ОТВЕТЫ</span><span>ПОСЛЕДНИЙ</span></div><div id="threadsDynamic"></div></div><div id="postsPanel" class="posts-panel"><button id="backToThreads">← НАЗАД</button><h3 id="currentThreadTitle"></h3><div id="postsList"></div><div><h4>ОТВЕТИТЬ</h4><input type="text" id="replyAuthor" placeholder="Автор"><textarea id="replyContent" rows="3"></textarea><button id="submitReply">ОТПРАВИТЬ</button></div></div></div></div>
+            
+            <!-- ХАКЕРСТВО (расширенный словарь) -->
+            <div id="tab-hack" class="tab-pane">
+                <div>
+                    <h3>▸ ХАКЕРСКИЙ СЛОВАРЬ</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 15px;">
+                        <div><strong>DDoS</strong> — распределённая атака «отказ в обслуживании»</div>
+                        <div><strong>DoS</strong> — атака с одного источника</div>
+                        <div><strong>Сват (SWATting)</strong> — ложный вызов спецназа</div>
+                        <div><strong>Докс (Doxxing)</strong> — публикация личных данных</div>
+                        <div><strong>Деанон</strong> — раскрытие анонимной личности</div>
+                        <div><strong>Бомбер</strong> — массовая рассылка (SMS, звонки)</div>
+                        <div><strong>Взлом аккаунтов</strong> — кража доступа</div>
+                        <div><strong>Взлом сайтов</strong> — эксплуатация уязвимостей</div>
+                        <div><strong>OSINT</strong> — сбор информации из открытых источников</div>
+                        <div><strong>Фишинг</strong> — кража данных через поддельные сайты</div>
+                        <div><strong>Кейлоггер</strong> — перехват нажатий клавиш</div>
+                        <div><strong>Эксплойт</strong> — программа, использующая уязвимость</div>
+                        <div><strong>Фарминг</strong> — перенаправление на фальшивый сайт</div>
+                        <div><strong>Спуфинг</strong> — подмена идентификаторов (IP, MAC)</div>
+                        <div><strong>Брутфорс</strong> — подбор паролей перебором</div>
+                        <div><strong>Реверс-инжиниринг</strong> — анализ кода программы</div>
+                        <div><strong>Социальная инженерия</strong> — взлом через психологию</div>
+                        <div><strong>Шелл-код</strong> — код для внедрения в уязвимую программу</div>
+                        <div><strong>Rootkit</strong> — скрытие вредоносного ПО в системе</div>
+                        <div><strong>Троян</strong> — вредоносная программа под видом легальной</div>
+                        <div><strong>Сниффер</strong> — перехват сетевого трафика</div>
+                        <div><strong>Фрод</strong> — мошенничество в интернете</div>
+                        <div><strong>Кардинг</strong> — незаконные операции с банковскими картами</div>
+                        <div><strong>Скам</strong> — обман с целью выманивания денег</div>
+                        <div><strong>Бэкдор</strong> — скрытый доступ к системе</div>
+                        <div><strong>Криптоджекер</strong> — скрытый майнинг на устройстве жертвы</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DDoS-АТАКА -->
+            <div id="tab-ddos" class="tab-pane"><div><h3>DDoS-АТАКА</h3><input type="text" id="ddosUrl" placeholder="URL" value="https://hackme.target/"><input type="number" id="requestCount" value="1000" min="1" style="width:180px; margin-top:5px;"><button id="startDdosBtn">ЗАПУСТИТЬ</button><div class="progress-bar"><div class="progress-fill" id="ddosProgressFill"></div></div><div id="ddosPercent">0%</div><div class="log-area" id="ddosLog"><p>[>] Готов</p></div></div></div>
+            
+            <!-- ВЗЛОМ САЙТОВ -->
+            <div id="tab-webhack" class="tab-pane"><div><h3>ВЗЛОМ САЙТОВ</h3><input type="text" id="webhackUrl" placeholder="URL" value="https://vuln-site.com/"><button id="startWebhackBtn">ВЗЛОМАТЬ</button><div class="progress-bar"><div class="progress-fill" id="webhackProgressFill"></div></div><div id="webhackPercent">0%</div><div class="log-area" id="webhackLog"><p>[>] Готов</p></div></div></div>
+            
+            <!-- МАРКЕТ -->
+            <div id="tab-market" class="tab-pane"><div><h3>🛒 МАРКЕТ — ЦИФРОВЫЕ ТОВАРЫ</h3><div id="marketItems" class="market-grid"><div style="text-align:center; padding:40px;">Загрузка...</div></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка настроек -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h3>⚙️ НАСТРОЙКИ ТЕМЫ</h3>
+        <div class="settings-option">
+            <label>🎨 Цвет акцента:</label>
+            <div><button id="colorGreen" style="background:green; color:white;">Зелёный</button> <button id="colorRed" style="background:red; color:white;">Красный</button> <button id="colorBlue" style="background:blue; color:white;">Синий</button></div>
+        </div>
+        <div class="settings-option">
+            <label>🖼️ Фон:</label>
+            <div><button id="bgDefault">Классический градиент</button></div>
+            <div style="margin-top:8px;"><button id="bgHack1">Хакерский фон 1</button></div>
+            <div style="margin-top:8px;"><button id="bgHack2">Хакерский фон 2</button></div>
+        </div>
+        <div style="margin-top:20px; text-align:right;"><button id="closeSettings">Закрыть</button></div>
+    </div>
+</div>
+
+<!-- Остальные модалки (регистрация, создание темы) -->
+<div id="regModal" class="modal"><div class="modal-content"><h3>РЕГИСТРАЦИЯ / ВХОД</h3><input type="text" id="regNick" placeholder="Никнейм"><input type="password" id="regPass" placeholder="Пароль"><div style="display:flex; justify-content:flex-end; gap:10px;"><button id="regCancel">Отмена</button><button id="regConfirm">Войти</button></div></div></div>
+<div id="createTopicModal" class="modal"><div class="modal-content"><h3>НОВАЯ ТЕМА</h3><input type="text" id="topicTitle" placeholder="Название"><input type="text" id="topicAuthor" placeholder="Автор"><textarea id="topicFirstPost" rows="3" placeholder="Первый пост"></textarea><label><input type="checkbox" id="topicIsPrivate"> Приватная тема</label><input type="password" id="topicPassword" placeholder="Пароль" disabled><div style="display:flex; justify-content:flex-end; gap:10px;"><button id="createTopicCancel">Отмена</button><button id="createTopicConfirm">Создать</button></div></div></div>
+
+<script type="module">
+    // ========== ИМПОРТЫ FIREBASE ==========
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, ref, set, push, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    
+    // ========== ТВОЙ ГОТОВЫЙ КОНФИГ FIREBASE ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyBOBf-VIuq_j6dq3_ad8dHgNut3bLa3Jgw",
+        authDomain: "ebos-hacking-forum.firebaseapp.com",
+        databaseURL: "https://ebos-hacking-forum-default-rtdb.firebaseio.com",
+        projectId: "ebos-hacking-forum",
+        storageBucket: "ebos-hacking-forum.firebasestorage.app",
+        messagingSenderId: "795507954195",
+        appId: "1:795507954195:web:a2d6fb8592e917deeba5e6"
+    };
+    // =================================================
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    
+    // Глобальные переменные
+    let currentUser = null;
+    let currentThreadId = null;
+    
+    // DOM элементы
+    const userArea = document.getElementById('userArea');
+    const threadsContainer = document.getElementById('threadsDynamic');
+    const postsContainer = document.getElementById('postsList');
+    const postsPanel = document.getElementById('postsPanel');
+    const currentThreadTitle = document.getElementById('currentThreadTitle');
+    const replyAuthor = document.getElementById('replyAuthor');
+    const replyContent = document.getElementById('replyContent');
+    const submitReply = document.getElementById('submitReply');
+    const backToThreads = document.getElementById('backToThreads');
+    const createTopicBtn = document.getElementById('createTopicBtn');
+    const regModal = document.getElementById('regModal');
+    const regNick = document.getElementById('regNick');
+    const regPass = document.getElementById('regPass');
+    const regConfirm = document.getElementById('regConfirm');
+    const regCancel = document.getElementById('regCancel');
+    const createTopicModal = document.getElementById('createTopicModal');
+    const topicTitle = document.getElementById('topicTitle');
+    const topicAuthor = document.getElementById('topicAuthor');
+    const topicFirstPost = document.getElementById('topicFirstPost');
+    const topicIsPrivate = document.getElementById('topicIsPrivate');
+    const topicPassword = document.getElementById('topicPassword');
+    const createTopicConfirm = document.getElementById('createTopicConfirm');
+    const createTopicCancel = document.getElementById('createTopicCancel');
+    const sessionCount = document.getElementById('sessionCount');
+    const marketContainer = document.getElementById('marketItems');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    
+    // ========== НАСТРОЙКИ ТЕМЫ ==========
+    function applyTheme(color, bgType) {
+        const root = document.documentElement;
+        let accent, accentDim, accentBorder, accentGlow, accentHover, textMain, textDim;
+        switch(color) {
+            case 'red':
+                accent = '#f44';
+                accentDim = '#3a0a0a';
+                accentBorder = '#8a2a2a';
+                accentGlow = 'rgba(255,0,0,0.3)';
+                accentHover = '#9f3f3f';
+                textMain = '#f88';
+                textDim = '#faa';
+                break;
+            case 'blue':
+                accent = '#44f';
+                accentDim = '#0a0a3a';
+                accentBorder = '#2a2a8a';
+                accentGlow = 'rgba(0,0,255,0.3)';
+                accentHover = '#3f3f9f';
+                textMain = '#88f';
+                textDim = '#aaf';
+                break;
+            default:
+                accent = '#0f0';
+                accentDim = '#0a2a0a';
+                accentBorder = '#2a6f2a';
+                accentGlow = 'rgba(0,255,0,0.3)';
+                accentHover = '#1f6f1f';
+                textMain = '#0f0';
+                textDim = '#8bc34a';
+        }
+        root.style.setProperty('--accent', accent);
+        root.style.setProperty('--accent-dim', accentDim);
+        root.style.setProperty('--accent-border', accentBorder);
+        root.style.setProperty('--accent-glow', accentGlow);
+        root.style.setProperty('--accent-hover', accentHover);
+        root.style.setProperty('--text-main', textMain);
+        root.style.setProperty('--text-dim', textDim);
+        
+        document.body.classList.remove('bg-default', 'bg-hack1', 'bg-hack2');
+        if (bgType === 'hack1') document.body.classList.add('bg-hack1');
+        else if (bgType === 'hack2') document.body.classList.add('bg-hack2');
+        else document.body.classList.add('bg-default');
+    }
+    
+    function loadThemeSettings() {
+        const savedColor = localStorage.getItem('ebos_theme_color') || 'green';
+        const savedBg = localStorage.getItem('ebos_theme_bg') || 'default';
+        applyTheme(savedColor, savedBg);
+    }
+    
+    function saveThemeColor(color) {
+        localStorage.setItem('ebos_theme_color', color);
+        const savedBg = localStorage.getItem('ebos_theme_bg') || 'default';
+        applyTheme(color, savedBg);
+    }
+    
+    function saveThemeBg(bgType) {
+        localStorage.setItem('ebos_theme_bg', bgType);
+        const savedColor = localStorage.getItem('ebos_theme_color') || 'green';
+        applyTheme(savedColor, bgType);
+    }
+    
+    document.getElementById('colorGreen')?.addEventListener('click', () => saveThemeColor('green'));
+    document.getElementById('colorRed')?.addEventListener('click', () => saveThemeColor('red'));
+    document.getElementById('colorBlue')?.addEventListener('click', () => saveThemeColor('blue'));
+    document.getElementById('bgDefault')?.addEventListener('click', () => saveThemeBg('default'));
+    document.getElementById('bgHack1')?.addEventListener('click', () => saveThemeBg('hack1'));
+    document.getElementById('bgHack2')?.addEventListener('click', () => saveThemeBg('hack2'));
+    
+    settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
+    closeSettings.addEventListener('click', () => settingsModal.classList.remove('active'));
+    window.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.remove('active'); });
+    
+    loadThemeSettings();
+    
+    // ========== ВКЛАДКИ ==========
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    function switchTab(tabId) {
+        tabPanes.forEach(pane => pane.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-tab') === tabId) btn.classList.add('active');
+        });
+        if (tabId !== 'forum') {
+            postsPanel.classList.remove('active');
+            currentThreadId = null;
+        }
+        if (tabId === 'market') loadMarketItems();
+    }
+    tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab'))));
+    
+    // ========== АВТОРИЗАЦИЯ ==========
+    function updateUserUI() {
+        if (currentUser) {
+            const displayName = currentUser.email.split('@')[0];
+            userArea.innerHTML = `<div class="user-info">👤 ${displayName} <button id="logoutBtn" style="background:#1a0a0a; border-color:#5a2a2a; margin-left:8px;">Выйти</button></div>`;
+            document.getElementById('logoutBtn')?.addEventListener('click', () => signOut(auth));
+            replyAuthor.value = displayName;
+            topicAuthor.value = displayName;
+        } else {
+            userArea.innerHTML = '<button id="registerBtn">🔐 РЕГИСТРАЦИЯ / ВХОД</button>';
+            document.getElementById('registerBtn')?.addEventListener('click', () => regModal.classList.add('active'));
+        }
+    }
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        updateUserUI();
+        if (user) { loadThreads(); loadMarketItems(); }
+        else {
+            threadsContainer.innerHTML = '<div style="padding:10px;">[!] Войдите, чтобы видеть темы</div>';
+            postsPanel.classList.remove('active');
+        }
+    });
+    regConfirm.addEventListener('click', async () => {
+        const email = regNick.value.trim() + '@ebos.local';
+        const password = regPass.value.trim();
+        if (!regNick.value.trim() || !password) { alert("Заполни ник и пароль"); return; }
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            alert("Регистрация успешна");
+            regModal.classList.remove('active');
+        } catch (err) {
+            if (err.code === 'auth/email-already-in-use') {
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    alert("Вход выполнен");
+                    regModal.classList.remove('active');
+                } catch (e) { alert("Ошибка входа: " + e.message); }
+            } else alert("Ошибка: " + err.message);
+        }
+    });
+    regCancel.addEventListener('click', () => regModal.classList.remove('active'));
+    
+    // ========== ФОРУМ ==========
+    function loadThreads() {
+        const threadsRef = ref(db, 'threads');
+        onValue(threadsRef, (snapshot) => {
+            const data = snapshot.val();
+            let html = '';
+            if (data) {
+                const threadsArray = Object.entries(data).map(([id, value]) => ({ id, ...value }));
+                threadsArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                threadsArray.forEach(t => {
+                    const lock = t.isPrivate ? '🔒 ' : '';
+                    const replies = t.posts ? Object.keys(t.posts).length : 0;
+                    let last = 'никогда';
+                    if (t.posts) {
+                        const postsArray = Object.values(t.posts);
+                        const lastPost = postsArray.sort((a,b) => b.timestamp - a.timestamp)[0];
+                        if (lastPost) last = new Date(lastPost.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    }
+                    html += `<div class="thread-row" data-id="${t.id}"><div>${lock}${escapeHtml(t.title)}</div><div>${replies}</div><div>${last}</div></div>`;
+                });
+            }
+            threadsContainer.innerHTML = html || '<div style="padding:10px;">[!] НЕТ ТЕМ. СОЗДАЙТЕ ПЕРВУЮ!</div>';
+            document.querySelectorAll('.thread-row').forEach(row => {
+                row.addEventListener('click', () => openThread(row.getAttribute('data-id')));
+            });
+        });
+    }
+    async function openThread(id) {
+        const threadRef = ref(db, `threads/${id}`);
+        const snapshot = await get(threadRef);
+        if (!snapshot.exists()) return;
+        const thread = snapshot.val();
+        if (thread.isPrivate) {
+            const pwd = prompt(`Тема "${thread.title}" защищена. Пароль:`);
+            if (pwd !== thread.password) { alert("Неверный пароль!"); return; }
+        }
+        currentThreadId = id;
+        currentThreadTitle.innerHTML = `📁 ${escapeHtml(thread.title)}`;
+        renderPosts(thread);
+        postsPanel.classList.add('active');
+    }
+    function renderPosts(thread) {
+        if (!thread.posts) { postsContainer.innerHTML = '<div class="post">[ нет сообщений ]</div>'; return; }
+        const postsArray = Object.values(thread.posts);
+        postsArray.sort((a,b) => a.timestamp - b.timestamp);
+        let html = '';
+        postsArray.forEach(p => {
+            const date = new Date(p.timestamp).toLocaleString('ru-RU');
+            html += `<div class="post"><div class="post-meta"><span>⧩ ${escapeHtml(p.author)}</span><span>📅 ${date}</span></div><div>${escapeHtml(p.content)}</div></div>`;
+        });
+        postsContainer.innerHTML = html;
+    }
+    submitReply.addEventListener('click', async () => {
+        if (!currentThreadId || !currentUser) { alert("Войдите в аккаунт"); return; }
+        const author = replyAuthor.value.trim();
+        const content = replyContent.value.trim();
+        if (!content) { alert("Введите текст"); return; }
+        const newPostRef = push(ref(db, `threads/${currentThreadId}/posts`));
+        await set(newPostRef, { author: author || "anon", content: content, timestamp: Date.now() });
+        replyContent.value = '';
+    });
+    backToThreads.addEventListener('click', () => { postsPanel.classList.remove('active'); currentThreadId = null; });
+    createTopicBtn.addEventListener('click', () => {
+        if (!currentUser) { alert("Сначала войдите"); return; }
+        topicTitle.value = '';
+        topicAuthor.value = currentUser.email.split('@')[0];
+        topicFirstPost.value = '';
+        topicIsPrivate.checked = false;
+        topicPassword.disabled = true;
+        createTopicModal.classList.add('active');
+    });
+    topicIsPrivate.addEventListener('change', (e) => { topicPassword.disabled = !e.target.checked; });
+    createTopicCancel.addEventListener('click', () => createTopicModal.classList.remove('active'));
+    createTopicConfirm.addEventListener('click', async () => {
+        const title = topicTitle.value.trim();
+        const author = topicAuthor.value.trim();
+        const firstPost = topicFirstPost.value.trim();
+        const isPrivate = topicIsPrivate.checked;
+        const pwd = topicPassword.value.trim();
+        if (!title || !firstPost) { alert("Заполни заголовок и текст"); return; }
+        if (isPrivate && !pwd) { alert("Приватной теме нужен пароль"); return; }
+        const newThreadRef = push(ref(db, 'threads'));
+        const threadId = newThreadRef.key;
+        await set(newThreadRef, { title, isPrivate, password: isPrivate ? pwd : "", timestamp: Date.now() });
+        await set(push(ref(db, `threads/${threadId}/posts`)), { author: author || "anonymous", content: firstPost, timestamp: Date.now() });
+        createTopicModal.classList.remove('active');
+        switchTab('forum');
+    });
+    
+    // ========== МАРКЕТ (обновлённый: + EBOS WIN) ==========
+    const marketItemsData = [
+        {
+            id: "eboswin",
+            name: "EBOS WIN",
+            image: "https://e.radikal.host/2026/04/23/EBOS-WIN.jpg",
+            description: "Программа, которая была сделана хакером EBOS. Очень мощная программа.",
+            status: "скоро в релизе"
+        },
+        {
+            id: "totem",
+            name: "TOTEM",
+            image: "https://e.radikal.host/2026/04/10/TOTEm.jpg",
+            description: "Классная программа для начинающих доксеров. Есть инструменты: смс бомбер, а также мануалы и многое другое.",
+            status: "скоро в релизе"
+        },
+        {
+            id: "wannacry",
+            name: "Wanna Cry 1.5.0",
+            image: "https://e.radikal.host/2026/04/08/Wanna-Cry-1.5.0.jpg",
+            description: "Широкий ассортимент: мануалы по доксу, DDoS атаки разного уровня, поиск по IP, поиск по OSINT.",
+            status: "скоро в релизе"
+        },
+        {
+            id: "panic",
+            name: "Panic",
+            image: "https://e.radikal.host/2026/04/08/Panic.jpg",
+            description: "Нагоняйте панику на людей. Функционал небольшой, но мощный.",
+            status: "скоро в релизе"
+        },
+        {
+            id: "terrorblade",
+            name: "Terrorblade",
+            image: "https://e.radikal.host/2026/04/08/Terrorblade.jpg",
+            description: "Мультитул для доксера, можно запускать другие утилиты. Хороший ассортимент.",
+            status: "скоро в релизе"
+        }
+    ];
+    
+    async function initMarketItems() {
+        // Принудительно обновляем все товары (включая статус) и удаляем старые (например, mystery)
+        for (const item of marketItemsData) {
+            await set(ref(db, `market/items/${item.id}`), {
+                name: item.name,
+                image: item.image,
+                description: item.description,
+                status: item.status
+            });
+        }
+        // Удаляем устаревший Mystery, если он есть
+        const mysteryRef = ref(db, 'market/items/mystery');
+        const mysterySnap = await get(mysteryRef);
+        if (mysterySnap.exists()) {
+            await set(mysteryRef, null);
+            console.log("Mystery v2.0 удалён");
+        }
+    }
+    
+    async function loadMarketItems() {
+        const marketRef = ref(db, 'market/items');
+        onValue(marketRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) { marketContainer.innerHTML = '<div style="text-align:center; padding:40px;">Товары не загружены</div>'; return; }
+            let html = '';
+            // Новый порядок: сначала EBOS WIN, затем остальные
+            const order = ['eboswin', 'totem', 'wannacry', 'panic', 'terrorblade'];
+            for (const id of order) {
+                const item = data[id];
+                if (item) {
+                    html += `<div class="market-card"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p><div class="market-status">${escapeHtml(item.status)}</div></div>`;
+                }
+            }
+            marketContainer.innerHTML = html;
+        });
+    }
+    
+    initMarketItems().then(() => {
+        if (currentUser) loadMarketItems();
+    });
+    
+    // ========== DDoS И ВЗЛОМ (локальные анимации) ==========
+    let ddosInterval = null;
+    function addDdosLog(msg, type='') { const div = document.getElementById('ddosLog'); const p = document.createElement('p'); p.textContent = `[>] ${msg}`; if (type==='success') p.style.color = '#0f0'; else if(type==='error') p.style.color='#f66'; div.appendChild(p); p.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    function updateDdosProgress(p) { document.getElementById('ddosProgressFill').style.width = p+'%'; document.getElementById('ddosPercent').innerText = p+'%'; }
+    window.startDdos = function() {
+        const url = document.getElementById('ddosUrl').value.trim();
+        const req = parseInt(document.getElementById('requestCount')?.value || 1000,10);
+        if (!url) { addDdosLog("Ошибка: цель","error"); return; }
+        if (ddosInterval) return;
+        const btn = document.getElementById('startDdosBtn');
+        btn.disabled = true; btn.textContent = "АТАКА...";
+        document.getElementById('ddosLog').innerHTML = '';
+        updateDdosProgress(0);
+        addDdosLog(`Цель: ${url}`);
+        addDdosLog("УСПЕШНОЕ ПОДКЛЮЧЕНИЕ К БОТНЕТУ","success");
+        let start = Date.now(), last=0;
+        ddosInterval = setInterval(()=>{
+            let elapsed = Date.now()-start;
+            let percent = Math.min(100, Math.floor(elapsed/30000*100));
+            updateDdosProgress(percent);
+            if (percent>=20 && last<20) addDdosLog("Отправка пакетов...");
+            if (percent>=100) { clearInterval(ddosInterval); ddosInterval=null; updateDdosProgress(100); addDdosLog("ГОТОВО! Атака завершена","success"); btn.disabled=false; btn.textContent="ЗАПУСТИТЬ"; }
+            last=percent;
+        },200);
+    };
+    let webhackInterval = null;
+    function addWebhackLog(msg, type='') { const div = document.getElementById('webhackLog'); const p = document.createElement('p'); p.textContent = `[>] ${msg}`; if (type==='success') p.style.color='#0f0'; else if(type==='error') p.style.color='#f66'; div.appendChild(p); p.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    function updateWebhackProgress(p) { document.getElementById('webhackProgressFill').style.width = p+'%'; document.getElementById('webhackPercent').innerText = p+'%'; }
+    window.startWebhack = function() {
+        const url = document.getElementById('webhackUrl').value.trim();
+        if (!url) { addWebhackLog("Ошибка: цель","error"); return; }
+        if (webhackInterval) return;
+        const btn = document.getElementById('startWebhackBtn');
+        btn.disabled = true; btn.textContent = "ВЗЛОМ...";
+        document.getElementById('webhackLog').innerHTML = '';
+        updateWebhackProgress(0);
+        addWebhackLog(`Цель: ${url}`);
+        addWebhackLog("Инициализация...");
+        let start = Date.now(), last=0;
+        webhackInterval = setInterval(()=>{
+            let elapsed = Date.now()-start;
+            let percent = Math.min(100, Math.floor(elapsed/30000*100));
+            updateWebhackProgress(percent);
+            if (percent>=25 && last<25) addWebhackLog("Найдена уязвимость");
+            if (percent>=50 && last<50) addWebhackLog("Доступ к БД");
+            if (percent>=100) { clearInterval(webhackInterval); webhackInterval=null; updateWebhackProgress(100); addWebhackLog("ГОТОВО! Доступ получен","success"); btn.disabled=false; btn.textContent="ВЗЛОМАТЬ"; }
+            last=percent;
+        },200);
+    };
+    document.getElementById('startDdosBtn')?.addEventListener('click', window.startDdos);
+    document.getElementById('startWebhackBtn')?.addEventListener('click', window.startWebhack);
+    
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;': m==='<'?'&lt;':'&gt;'); }
+    setInterval(() => { sessionCount.innerText = Math.floor(Math.random()*100+42); }, 5000);
+</script>
+</body>
+</html>
